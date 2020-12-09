@@ -1,6 +1,19 @@
 <template>
-    <div style="padding:20px;">
-      <el-card class="box-card">
+    <div>
+      <el-row class="col" :gutter="20">
+        <el-col :span="12" class="panel h-30">
+           <el-card class="box-card">
+              <div slot="header" class="clearfix">
+                <span>微信连接</span>
+              </div>
+              <div class="text item">
+                <el-input placeholder="输入贴吧名称" v-model="tbName"></el-input>
+                <el-button style="margin-top:20px;" @click="reqdd">确认</el-button>
+              </div>
+            </el-card>
+        </el-col>
+        <el-col :span="12" class="h-30 panel">
+           <el-card class="box-card">
         <div slot="header" class="clearfix">
           <span>卡片名称</span>
           <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button>
@@ -10,11 +23,19 @@
           <el-button style="margin-top:20px;" @click="reqdd">确认</el-button>
         </div>
       </el-card>
-      
-      <div class="image">
+        </el-col>
+        <el-col :span="12" class="h-50 panel">
+            <div class="image">
         <img :src="image" />
       </div>
-      <div v-html="content"></div>
+        </el-col>
+        <el-col :span="12" class="h-50 panel">
+          
+        </el-col>
+        <el-col class="h-20 panel">
+          
+        </el-col>
+      </el-row>
     </div>
   </div>
 </template>
@@ -89,10 +110,34 @@ export default {
   .image{
     width: 200px;
     height: 200px;
-
   }
   iframe{
     width: 100%;
     height: 100%;
+  }
+  .col{
+    position: absolute;
+    height: 100%;
+    width: 100%;
+  }
+  .h-30{
+    height: 30%;
+    border: 1px solid;
+  }
+  .h-50{
+    height: 50%;
+    border: 1px solid;
+  }
+  .h-20{
+    height: 20%;
+    border: 1px solid;
+  }
+  .col{
+    .panel{
+      
+    }
+    /deep/.el-card__header{
+      padding: 6px 20px;
+    }
   }
 </style>
