@@ -1,39 +1,72 @@
 <template>
     <div>
-      <el-row class="col" :gutter="20">
-        <el-col :span="12" class="panel h-30">
-           <el-card class="box-card">
-              <div slot="header" class="clearfix">
-                <span>微信连接</span>
-              </div>
-              <div class="text item">
-                <el-input placeholder="输入贴吧名称" v-model="tbName"></el-input>
-                <el-button style="margin-top:20px;" @click="reqdd">确认</el-button>
-              </div>
-            </el-card>
+      <el-row class="col">
+        <el-col :span="10" class="h-30">
+          <div class="panel"></div>
         </el-col>
-        <el-col :span="12" class="h-30 panel">
-           <el-card class="box-card">
-        <div slot="header" class="clearfix">
-          <span>卡片名称</span>
-          <el-button style="float: right; padding: 3px 0" type="text">操作按钮</el-button>
-        </div>
-        <div class="text item">
-          <el-input placeholder="输入贴吧名称" v-model="tbName"></el-input>
-          <el-button style="margin-top:20px;" @click="reqdd">确认</el-button>
-        </div>
-      </el-card>
+        <!-- 操作 -->
+        <el-col :span="14" class="h-30">
+          <div class="panel" style="padding:0;">
+            <el-tabs type="border-card" v-model="activeName">
+              <!-- 进吧采集 -->
+              <el-tab-pane label="进吧采集" name="first">
+                <div class="flex-col">
+                  <el-input type="textarea" :rows="3" resize="none" />
+                  <div class="info">
+                    <div style="margin-bottom:10px;">采集页数：<el-input  style="width:50px;" size="mini" clearable /> 页</div>
+                    <div>延迟：<el-input  style="width:60px;" size="mini" clearable /> 毫秒</div>
+                  </div>
+                </div>
+                <div>
+                  <el-button type="success" size="small" style="margin-top:20px;" @click="jbGather">查看热门贴吧方法</el-button>
+                  <span v-html="`<<<（自动获取热门贴吧/天天更新[获取源来自百度]）`"></span>
+                </div>
+                <div style="margin-top:8px;">
+                  <el-input size="small" v-model="tbName" style="width:130px;" clearable />
+                  <span v-html="`<<<输入贴吧名称`"></span>
+                  <el-button type="primary" size="small" @click="jbGather">开始采集</el-button>
+                  <el-button type="danger" size="small" @click="jbGather">停止采集</el-button>
+                </div>
+              </el-tab-pane>
+              <!-- 全贴吧采集 -->
+              <el-tab-pane label="全贴吧采集" name="second">
+                <el-input size="small" clearable />
+                <div class="mt-10">  
+                  <el-button type="primary" size="small">全吧采集</el-button>
+                  <el-input style="width:50px;" size="mini" clearable /> 页
+                  <el-button type="danger" size="small">停止</el-button>
+                </div>
+                <div style="margin-top:52px;">
+                  吧内搜索关键字采集：<el-input size="small" style="width:200px;" clearable />
+                  <el-button type="primary" size="small">吧内搜索</el-button>
+                  <el-button type="danger" size="small">停止采集</el-button>
+                </div>
+              </el-tab-pane>
+            </el-tabs>            
+          </div>          
         </el-col>
-        <el-col :span="12" class="h-50 panel">
+        <!-- 二维码显示 -->
+        <el-col :span="10" class="h-50">
+          <div class="panel">
+            <el-tag type="info">二维码显示</el-tag>
             <div class="image">
-        <img :src="image" />
-      </div>
+              <img :src="image" width="100%" height="100%" border="1" />
+            </div>
+          </div>          
         </el-col>
-        <el-col :span="12" class="h-50 panel">
-          
+        <!-- 采集列表区 -->
+        <el-col :span="14" class="h-50">
+          <div class="panel">
+            <el-tag type="info">采集列表区</el-tag>
+            <div class="mt-10">
+              <el-button type="success">导出二维码</el-button>自定义导出图片文件夹标题 <el-input style="width:120px;" clearable />
+            </div>
+          </div> 
         </el-col>
-        <el-col class="h-20 panel">
-          
+        <el-col class="logs-col">
+          <div class="panel" style="overflow: auto;">
+            <p v-for="item in logs" :key="item">{{ item }}</p>
+          </div>
         </el-col>
       </el-row>
     </div>
@@ -49,13 +82,18 @@ export default {
   name: 'login',
   data() {
     return {
+      activeName: 'first',
       image: '',
       tbName: '',
-      content: ''
+      content: '',
+      logs: [],
+      images: []
     }
   },
   methods: {
-    reqdd() {
+    // 进吧采集
+    jbGather() {
+      this.logs = ['正在解析中...']
       const tbName = encodeURI(this.tbName)
       const url = `https://tieba.baidu.com/f?ie=utf-8&kw=${tbName}&fr=search`
       const browserMsg = {
@@ -70,37 +108,43 @@ export default {
         'Sec-Fetch-Site': 'same-origin'
       }
 
-      superagent
-        .get(url)
-        .set(browserMsg)
-        // eslint-disable-next-line handle-callback-err
-        .end((err, res) => {
-          const arr = res.text.match(/bpic=\"http[s]{0,1}:\/\/(tiebapic|imgsa).baidu.com\/forum([^\'\"]*)[\']?/g) || []
-          this.loadImage(arr)
-        })
+      const req = superagent.get(url).retry(3).set(browserMsg)
+      console.log('req', req)
+      req.end((err, res) => {
+        const arr = res.text.match(/bpic=\"http[s]{0,1}:\/\/(tiebapic|imgsa).baidu.com\/forum([^\'\"]*)[\']?/g) || []
+        this.loadImage(arr)
+        console.log(err)
+      })
     },
-    async loadImage(images) {
-      const arr2 = []
+    loadImage(images) {
       const folderName = new Date().getTime()
       for (let index = 0; index < images.length; index++) {
         const imageUrl = images[index].replace('bpic=\"', '')
-        await new Promise((resolve, reject) => {
+        this.logs.unshift(`正在${index}读取...`)
+        const dir = `./images/${folderName}`
+        this.download(imageUrl, index, dir)
+      }
+      this.showImage()
+    },
+    // 显示
+    async showImage() {
+      const arr = this.images
+      for (let i = 0; i < arr.length; i++) {
+        await new Promise((resolve) => {
           setTimeout(() => {
             resolve()
-          }, 500)
+          }, 800)
+          this.image = arr[i]
         })
-        this.download(imageUrl, index, folderName)
-        arr2.push(imageUrl)
       }
     },
-    download(url, filename, folderName) {
-      if (!fs.existsSync(`./images/${folderName}`)) {
-        fs.mkdirSync(`./images/${folderName}`)
+    // 下载
+    download(url, filename, dir) {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir)
       }
-      console.log(`下载${filename}中...`)
-      request(url).pipe(fs.createWriteStream(`./images/${folderName}/${filename}.jpg`))
-      this.image = `http://localhost:9080/images/${folderName}/${filename}.jpg`
-      console.log('image:', this.image)
+      request(url).pipe(fs.createWriteStream(`${dir}/${filename}.jpeg`))
+      this.images.push(`${dir}/${filename}.jpeg`)
     }
   }
 }
@@ -108,36 +152,57 @@ export default {
 
 <style rel="stylesheet/scss" lang="scss">
   .image{
-    width: 200px;
-    height: 200px;
-  }
-  iframe{
-    width: 100%;
-    height: 100%;
+    width: 300px;
+    height: 300px;
+    background: #eee;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
   .col{
     position: absolute;
     height: 100%;
     width: 100%;
+    /deep/.el-col{
+      position: relative;
+      padding: 5px;  
+    }
+    .mt-10{
+      margin-top: 10px;
+    }
+    .panel{
+      width: 100%;
+      height: 100%;
+      box-shadow: 0 0 8px #ccc;
+      box-sizing: border-box;
+      padding: 5px;
+      overflow: hidden;
+      .flex-col{
+        display: flex;
+        align-items: flex-start;
+        &*{
+          flex: 1;
+        }
+        .info{
+          width: 300px;
+          padding-left: 10px;
+        }
+      }
+    }
+  }
+  .w-50{
+    width: 50%;
+    float: left;
   }
   .h-30{
     height: 30%;
-    border: 1px solid;
   }
   .h-50{
     height: 50%;
-    border: 1px solid;
   }
-  .h-20{
+  .logs-col{
     height: 20%;
-    border: 1px solid;
-  }
-  .col{
-    .panel{
-      
-    }
-    /deep/.el-card__header{
-      padding: 6px 20px;
-    }
+    overflow: auto;
   }
 </style>
