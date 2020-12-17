@@ -57,6 +57,8 @@
     "cheerio": "^1.0.0-rc.3",
     "element-ui": "2.3.4",
     "js-cookie": "^2.2.0",
+    "jszip": "^3.5.0",
+    "mongodb": "^3.6.3",
     "normalize.css": "7.0.0",
     "nprogress": "0.2.0",
     "superagent": "^6.1.0",
