@@ -11,10 +11,9 @@
               <!-- 进吧采集 -->
               <el-tab-pane label="进吧采集" name="first">
                 <div class="flex-col">
-                  <el-input type="textarea" :rows="3" resize="none" />
                   <div class="info">
                     <div style="margin-bottom:10px;">采集页数：<el-input v-model="pageCount" style="width:50px;" size="mini" clearable /> 页</div>
-                    <div>延迟：<el-input  style="width:60px;" size="mini" clearable /> 毫秒</div>
+                    <div>延迟：<el-input v-model="delayTime" style="width:60px;" size="mini" clearable /> 毫秒</div>
                   </div>
                 </div>
                 <div>
@@ -29,7 +28,7 @@
                 </div>
               </el-tab-pane>
               <!-- 全贴吧采集 -->
-              <el-tab-pane label="全贴吧采集" name="second">
+              <!-- <el-tab-pane label="全贴吧采集" name="second">
                 <el-input size="small" clearable />
                 <div class="mt-10">  
                   <el-button type="primary" size="small">全吧采集</el-button>
@@ -41,7 +40,7 @@
                   <el-button type="primary" size="small">吧内搜索</el-button>
                   <el-button type="danger" size="small">停止采集</el-button>
                 </div>
-              </el-tab-pane>
+              </el-tab-pane> -->
             </el-tabs>            
           </div>          
         </el-col>
@@ -114,7 +113,8 @@ export default {
       compressFileName: '',
       folderName: '',
       isCrawler: false,
-      pageCount: 3,
+      delayTime: 300,
+      pageCount: 1,
       pageSize: 50,
       currentReq: null,
       isStop: false,
@@ -134,7 +134,7 @@ export default {
       }
       const targetDir = imagePath + '/' + this.folderName
       startZIP(targetDir, `${this.diskName}\\`, this.compressFileName)
-      this.$message.success = '导出成功！'
+      this.$message.success('导出成功！')
     },
     // 进吧采集-停止
     stopJbGather() {
@@ -162,6 +162,11 @@ export default {
           pn = (pageIndex - 1) * this.pageSize
           await this.requestCrawl(pn, pageIndex)
           pageIndex++
+          await new Promise((resolve) => {
+            setTimeout(() => {
+              resolve()
+            }, this.delayTime)
+          })
         }
       }
     },
@@ -200,7 +205,7 @@ export default {
       const dir = `./images/${this.folderName}`
       for (let index = 0; index < images.length; index++) {
         const imageUrl = images[index].replace('bpic=\"', '')
-        this.download(dir, imageUrl, `${pageIndex}-${index}.jpeg`)
+        this.saveFile(dir, imageUrl, `${pageIndex}-${index}.jpeg`)
       }
       await this.showImage()
     },
@@ -221,13 +226,13 @@ export default {
       }
       this.image = ''
     },
-    // 下载
-    download(dir, url, filename) {
+    saveFile(dir, url, filename) {
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir)
       }
-      request(url).pipe(fs.createWriteStream(`${dir}/${filename}`))
-      this.images.push(`${dir}/${filename}`)
+      const filePath = `${dir}/${filename}`
+      request(url).pipe(fs.createWriteStream(filePath))
+      this.images.push(filePath)
     }
   }
 }
